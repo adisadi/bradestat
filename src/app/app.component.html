@@ -1,0 +1,30 @@
+
+<md-toolbar color="warn">
+  <span><img src="/assets/logo.gif" width="50px"></span>
+  <span style="margin-left: 50px;text-align: center">BrainDeath Member Statistik</span>
+</md-toolbar>
+
+<md-card>
+  <div>
+    <div class="flex-container" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center" fxLayoutAlign.xs="start" fxLayoutGap="20px">
+      <div class="flex-item" fxFlex="20%" fxFlex.xs="100%">
+        <md-radio-group [(ngModel)]="selectedStatType">
+          <md-radio-button *ngFor="let value of statTypes" [value]="value" (click)="selectStatType(value)" style="margin-right: 10px"> {{value}}
+          </md-radio-button>
+        </md-radio-group>
+      </div>
+      <div class="flex-item" fxFlex>
+        <md-select placeholder="Statistik" [(ngModel)]="selectedStatField">
+          <md-option *ngFor="let value of statFields" [value]="value" (click)="selectStatField(value)">{{value}}</md-option>
+        </md-select>
+      </div>
+    </div>
+  </div>
+</md-card>
+
+<md-card>
+  <chart [options]="options"></chart>
+</md-card>
+<md-card>
+  Letztes Update: {{updateDate}}
+</md-card>
