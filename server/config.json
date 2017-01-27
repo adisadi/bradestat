@@ -1,0 +1,8 @@
+{
+    "applicationId":"bbbfdd36b7156fefbed419ac0c487a0d",
+    "redis":{
+        "server":"127.0.0.1",
+        "port":"6379",
+        "pass":""
+    }
+}

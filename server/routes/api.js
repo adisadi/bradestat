@@ -3,7 +3,10 @@ const router = express.Router();
 const redis = require('redis');
 const async = require('async');
 
+const rclient = require('./../redis').rclient;
+
 const helper = require('./../import/wotImport');
+
 
 
 /* GET api listing. */
@@ -12,7 +15,6 @@ router.get('/', (req, res) => {
 });
 
 router.get('/members', (req, res) => {
-    rclient = redis.createClient();
     var names = [];
     rclient.keys("member*", function (err, rows) {
         async.each(rows,
@@ -28,11 +30,8 @@ router.get('/members', (req, res) => {
 });
 
 router.get('/stats/:statType/:statField', (req, res) => {
-    rclient = redis.createClient();
-
     var statType = req.params.statType;
     var statField = req.params.statField;
-
     var members = {}
     var memberNames = []
     rclient.keys("member*", function (err, rows) {
@@ -62,14 +61,9 @@ router.get('/stats/:statType/:statField', (req, res) => {
                 });
             });
     });
-
-
-
-
 });
 
 router.get('/statTypes', (req, res) => {
-    rclient = redis.createClient();
     var names = [];
     rclient.keys("stat_type*", function (err, rows) {
         async.each(rows,
@@ -80,11 +74,12 @@ router.get('/statTypes', (req, res) => {
 
             }, function () {
                 var sorted = names.sort((s1, s2) => {
-                    if (s1.length > s2.length)
+                    if (isNaN(s1))
                         return 1;
-                    if (s1.length < s2.length)
+                    if (isNaN(s2))
                         return -1;
-                    return 0;
+
+                    return parseInt(s1) - parseInt(s2);
                 });
                 res.json(sorted);
             });
@@ -93,44 +88,33 @@ router.get('/statTypes', (req, res) => {
 
 
 router.get('/statFields/:statType', (req, res) => {
-    rclient = redis.createClient();
     var statType = req.params.statType;
-
     rclient.hget("stat_type:" + statType, 'rank_fields', function (e, name) {
         res.json(JSON.parse(name));
     });
 });
 
 router.get('/updateStats/:force?', (req, res) => {
-    rclient = redis.createClient();
     var force = req.params.force;
-
     rclient.get("execution_time", function (err, date) {
         var date = new Date(date);
         if (date.getDate() != new Date().getDate() || (force === 'true')) {
-            updateStats(res);
+            helper.importWotStat(function (exeDate, t) {
+                res.json({ status: 'UPDATED', lastUpdate: exeDate, executionTime: t });
+            });
         }
         else {
-            res.json({ status: 'stats not updated', lastUpdate: date });
+            res.json({ status: 'NOTUPDATED', lastUpdate: date });
         }
     });
-
-
 });
 
 router.get('/updateDate/', (req, res) => {
-    rclient = redis.createClient();
-
     rclient.get("execution_time", function (err, date) {
         var date = new Date(date);
         res.json(date);
     });
 });
 
-var updateStats = function (res) {
-    helper.importWotStat();
-
-    res.json({ status: 'stats updated', lastUpdate: new Date() });
-}
 
 module.exports = router;

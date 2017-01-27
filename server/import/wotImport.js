@@ -3,17 +3,17 @@
 const redis = require('redis');
 const async = require("async");
 
+const config = require('./../config.json');
+
 const WorldOfTanks = require('wargamer').WorldOfTanks;
 const Wargaming = require('wargamer').Wargaming;
 
-var rclient = redis.createClient();
-rclient.on("error", function (err) {
-    console.log("Error " + err);
-});
+const rclient = require('./../redis').rclient;
 
+console.log(config);
 
-var wot = new WorldOfTanks({ realm: 'eu', applicationId: 'bbbfdd36b7156fefbed419ac0c487a0d' });
-var wg = new Wargaming({ realm: 'eu', applicationId: 'bbbfdd36b7156fefbed419ac0c487a0d' });
+var wot = new WorldOfTanks({ realm: 'eu', applicationId: config.applicationId });
+var wg = new Wargaming({ realm: 'eu', applicationId: config.applicationId });
 
 var GetClanMembers = function (callback) {
 
@@ -23,7 +23,7 @@ var GetClanMembers = function (callback) {
             .then((response) => {
                 callback(response.data[0].clan_id);
             }).catch((error) => {
-                console.log('getBradeClanId:'+error.message);
+                console.log('getBradeClanId:' + error);
             });
     };
 
@@ -31,11 +31,9 @@ var GetClanMembers = function (callback) {
         //Get MembersId
         wg.get('clans/info', { clan_id: clanId, game: 'wot' })
             .then((response) => {
-                  console.log('clanId-->'+clanId);
-                  console.log(response.data[clanId].members);
                 callback(response.data[clanId].members);
             }).catch((error) => {
-                console.log('getMembers:'+error.message);
+                console.log('getMembers:' + error);
             });
     };
 
@@ -55,12 +53,12 @@ var GetAvailableStat = function (callback) {
             }
             callback(statTypes);
         }).catch((error) => {
-            console.log('GetAvailableStat:'+error.message);
+            console.log('GetAvailableStat:' + error.message);
         });
 };
 
 
-var GetStats = function (members) {
+var GetStats = function (members, callback) {
 
     var accountIds = members.map(function (member) {
         return member.account_id;
@@ -68,12 +66,12 @@ var GetStats = function (members) {
 
     var statTypes = ["1", "7", "28", "all"];
 
-    var getPlayerRatingdates = function (accountIds, statType) {
-        return wot.get('ratings/dates', { account_id: accountIds, type: statType, battle_type: 'random' })
+    var getPlayerRatingdates = function (accountIds, statType, callback) {
+        wot.get('ratings/dates', { account_id: accountIds, type: statType, battle_type: 'random' })
             .then((response) => {
-                return { type: statType, dates: response.data["all"].dates };
+                callback({ type: statType, dates: response.data["all"].dates });
             }).catch((error) => {
-                console.log('getPlayerRatingdates'+error.message);
+                console.log('getPlayerRatingdates:' + error);
             });
     };
 
@@ -82,18 +80,25 @@ var GetStats = function (members) {
             .then((response) => {
                 callback({ type: config.statType, rankings: response.data, date: config.unixdate });
             }).catch((error) => {
-                console.log('getPlayerRating:' + error.message);
+                console.log('getPlayerRating:' + error);
             });
     }
 
     var promises = [];
     for (let statType of statTypes) {
-        promises.push(getPlayerRatingdates(accountIds, statType));
+        promises.push(function (callback) {
+            getPlayerRatingdates(accountIds, statType, function (result) {
+                callback(null, result);
+            });
+        });
     }
 
-    Promise.all(promises).then(function () {
+    async.series(promises, function (err, resultsDates) {
+
+          if (err) console.log('getPlayerRatingdates:' + err);
+
         var tasks = []
-        for (let statDates of arguments[0]) {
+        for (let statDates of resultsDates) {
             for (let date of statDates.dates) {
                 tasks.push(function (callback) {
                     getPlayerRating({ accountIds: accountIds, statType: statDates.type, unixdate: date }, function (result) {
@@ -104,6 +109,8 @@ var GetStats = function (members) {
         }
 
         async.series(tasks, function (err, results) {
+
+            if (err) console.log('getPlayerRating:' + err);
 
             var memberRatings = [];
             for (let statType of statTypes) {
@@ -128,31 +135,26 @@ var GetStats = function (members) {
                 memberRatings.push(memberRating);
             }
 
-            return memberRatings;
+            callback(memberRatings);
         });
-    }, function (err) {
-        console.log(err);
     });
 };
 
 
 
-function importWotStat() {
-
-    console.time("import stats");
+function importWotStat(callback) {
 
     var currentDate = new Date();
     rclient.set("execution_time", currentDate);
 
-
-
     GetClanMembers(function (members) {
         //Save Members
-        console.log(members);
+        console.log('Save Members');
         for (let member of members) {
             rclient.hmset("member:" + member.account_id, member);
         }
 
+        console.log('Get & Save Available stats');
         //Get & Save Available stats
         GetAvailableStat(function (stats) {
             for (let stat of stats) {
@@ -161,15 +163,19 @@ function importWotStat() {
         });
 
         //Get & Save Stats
-        var memberRatings = GetStats(members);
 
-        for (let memberRating of memberRatings) {
-            rclient.hmset("rating:" + memberRating.type, "ratings", JSON.stringify(memberRating.dates));
-        }
+        console.log('Get & Save Stats');
+        var memberRatings = GetStats(members, function (memberRatings) {
+            for (let memberRating of memberRatings) {
+                rclient.hmset("rating:" + memberRating.type, "ratings", JSON.stringify(memberRating.dates));
+            }
 
-        console.timeEnd("import stats");
+            let end = new Date() - currentDate;
+            console.log("Execution time: %dms", end);
 
+            callback(currentDate,end)
 
+        });
     });
 
 
