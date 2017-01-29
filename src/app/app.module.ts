@@ -9,10 +9,12 @@ import { ChartModule } from 'angular2-highcharts';
 
 import { AppComponent } from './app.component';
 import {StatsService} from './stats.service';
+import { ChartComponent } from './components/chart/chart.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    ChartComponent
   ],
   imports: [
     BrowserModule,

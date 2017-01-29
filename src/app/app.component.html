@@ -1,15 +1,14 @@
-
-<md-toolbar color="warn">
+<md-toolbar >
   <span><img src="/assets/logo.gif" width="50px"></span>
   <span style="margin-left: 50px;text-align: center">BrainDeath Member Statistik</span>
+<span></span>
 </md-toolbar>
 
-<md-card>
-  <div>
+<!--<md-card>
     <div class="flex-container" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center" fxLayoutAlign.xs="start" fxLayoutGap="20px">
       <div class="flex-item" fxFlex="20%" fxFlex.xs="100%">
         <md-radio-group [(ngModel)]="selectedStatType">
-          <md-radio-button *ngFor="let value of statTypes" [value]="value" (click)="selectStatType(value)" style="margin-right: 10px"> {{value}}
+          <md-radio-button *ngFor="let value of statTypes" [value]="value.type" (click)="selectStatType(value.type)" style="margin-right: 10px"> {{value.name()}}
           </md-radio-button>
         </md-radio-group>
       </div>
@@ -18,13 +17,30 @@
           <md-option *ngFor="let value of statFields" [value]="value" (click)="selectStatField(value)">{{value}}</md-option>
         </md-select>
       </div>
-    </div>
   </div>
-</md-card>
+</md-card>-->
 
-<md-card>
-  <chart [options]="options"></chart>
-</md-card>
-<md-card>
-  Letztes Update: {{updateDate}}
-</md-card>
+<md-tab-group >
+  <md-tab  *ngFor="let statType of statTypes" [label]="statType.name()">
+    <div>
+      <div class="flex-container" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center" fxLayoutWrap="wrap" fxLayoutGap="20px" >
+        <div class="flex-item" fxFlex="400px" fxFlex.xs="100%" *ngFor="let statField of statFields">
+          <md-card >
+            <div style="width: 380px">
+              <app-chart [StatType]="statType.type" [StatField]="statField"></app-chart>
+            </div>
+          </md-card>
+        </div>
+      </div>
+    </div>
+  </md-tab>
+</md-tab-group>
+
+
+
+<footer>
+  <md-card>
+    <span><b>Letztes Update:</b> {{updateDate}}</span>
+    <span><b>Version:</b> {{appVersion}}</span>
+  </md-card>
+</footer>

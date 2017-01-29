@@ -129,7 +129,7 @@ var GetStats = function (members, callback) {
                     for (let member of members) {
                         if (memberRating.dates[date] == null)
                             memberRating.dates[date] = [];
-                        memberRating.dates[date].push(ratings[member.account_id]);
+                        memberRating.dates[date].push(ratings.rankings[member.account_id]);
                     }
                 }
                 memberRatings.push(memberRating);
