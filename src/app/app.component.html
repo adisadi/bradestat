@@ -1,8 +1,14 @@
-<md-toolbar >
+<md-toolbar color="primary">
   <span><img src="/assets/logo.gif" width="50px"></span>
   <span style="margin-left: 50px;text-align: center">BrainDeath Member Statistik</span>
-<span></span>
+    <button md-icon-button [mdMenuTriggerFor]="menu">
+        <md-icon class="md-24" >menu</md-icon>
+    </button>
 </md-toolbar>
+
+<md-menu #menu="mdMenu">
+    <button md-menu-item (click)="updateStat()">Statistik aktualisieren</button>
+</md-menu>
 
 <!--<md-card>
     <div class="flex-container" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center" fxLayoutAlign.xs="start" fxLayoutGap="20px">
@@ -24,11 +30,9 @@
   <md-tab  *ngFor="let statType of statTypes" [label]="statType.name()">
     <div>
       <div class="flex-container" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center" fxLayoutWrap="wrap" fxLayoutGap="20px" >
-        <div class="flex-item" fxFlex="400px" fxFlex.xs="100%" *ngFor="let statField of statFields">
+        <div class="flex-item" fxFlex="20%" fxFlex.xs="100%" *ngFor="let statField of statFields[statType.type]">
           <md-card >
-            <div style="width: 380px">
               <app-chart [StatType]="statType.type" [StatField]="statField"></app-chart>
-            </div>
           </md-card>
         </div>
       </div>

@@ -1,11 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 @import '~@angular/material/core/theming/prebuilt/deeppurple-amber.css';
 
-.md-select-panel {
- max-height: none !important; 
-}
-
-.md-toolbar-row{
+md-toolbar-row { 
     justify-content: space-between !important;
 }
 

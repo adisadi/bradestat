@@ -27,6 +27,7 @@ export class StatsService {
     private statTypesUrl = 'api/statTypes';
     private statFieldsUrl = 'api/statFields';
     private updateDateUrl = 'api/updateDate';
+    private updateStatsUrl = 'api/updateStats';
 
     constructor(private http: Http) { }
 
@@ -94,6 +95,12 @@ export class StatsService {
     GetAvailableStatFields(statType: string): Observable<string[]> {
         let url = `${this.statFieldsUrl}/${statType}`;
         return this.http.get(url)
+            .map((response: Response) => <string[]>response.json())
+            .catch(this.handleError);
+    }
+
+    UpdateStatistics(): Observable<any> {
+        return this.http.get(this.updateStatsUrl)
             .map((response: Response) => <string[]>response.json())
             .catch(this.handleError);
     }

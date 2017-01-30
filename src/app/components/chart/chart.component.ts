@@ -1,7 +1,8 @@
 import { Component, OnInit, Input } from '@angular/core';
 
 import { StatsService } from './../../stats.service';
-import { IRating, IRank, IMemberRating, IStatType } from './../../interfaces/IRating';
+
+import { IStatField } from './../../interfaces/IStatField';
 
 var dateFormat = require('dateformat');
 
@@ -13,7 +14,7 @@ var dateFormat = require('dateformat');
 export class ChartComponent implements OnInit {
 
   private statType: string;
-  private statField: string;
+  private statField: IStatField;
 
   @Input()
   set StatType(type: string) {
@@ -23,12 +24,14 @@ export class ChartComponent implements OnInit {
   get StatType(): string { return this.statType; }
 
   @Input()
-  set StatField(type: string) {
+  set StatField(type: IStatField) {
     this.statField = type;
     this.updateChartData();
   }
 
-  get StatField(): string { return this.statField; }
+  get StatField(): IStatField { return this.statField; }
+
+
 
 
   private options: Object;
@@ -43,26 +46,28 @@ export class ChartComponent implements OnInit {
 
     if (this.statType === null || this.statField === null) {
       this.options = {
-        title: { text: this.statField },
+        title: { text: this.StatField.name },
         series: null,
         xAxis: {
           categories: null
-        }
+        },
+        credits: {enabled:false},
+        chart:{width:300}
       };
       return;
     }
 
-    this.statsService.GetStats(this.statType, this.statField)
+    this.statsService.GetStats(this.statType, this.statField.type)
       .subscribe((data: any) => {
         this.options = {
-          title: { text: this.statField },
+          title: { text: this.StatField.name },
           series: data.series,
           xAxis: {
             categories: data.dates
           },
           yAxis: {
             title: {
-              text: 'Werte'
+              text: this.StatField.unit
             }
           },
           plotOptions: {
@@ -71,7 +76,7 @@ export class ChartComponent implements OnInit {
             }
           },
           credits: {enabled:false},
-          chart:{width:"330"}
+          chart:{width:300}
         };
       },
       error => console.log(error),
