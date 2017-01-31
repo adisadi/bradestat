@@ -16,6 +16,8 @@ import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/switchMap';
 
 import { IRating, IRank, IMemberRating, IStatType } from './interfaces/IRating';
+import { IStats, IRankingDetail, IStatsDetail } from './interfaces/IStats';
+
 var dateFormat = require('dateformat');
 
 @Injectable()
@@ -48,9 +50,9 @@ export class StatsService {
         let url = `${this.statsUrl}/${statType}/${statField}`;
         return this.http.get(url)
             .map((response: Response) => {
-                var result = <any>response.json();
+                var result = <IStats>response.json();
 
-                var statsSorted = result.dates.sort((r1, r2) => {
+                let statsSorted: IStatsDetail[] = result.dates.sort((r1, r2) => {
                     if (r1.date > r2.date)
                         return 1;
                     if (r1.date < r2.date)
@@ -60,7 +62,7 @@ export class StatsService {
 
                 //Create Dates
                 let dates = statsSorted.map(function (obj) {
-                    return dateFormat(new Date(obj.date * 1000), 'dd.mm.yyyy');
+                    return dateFormat(new Date(parseInt(obj.date) * 1000), 'dd.mm.yyyy');
                 })
 
                 //Create Series
@@ -68,11 +70,15 @@ export class StatsService {
                 for (let member of result.members) {
                     let data = []
                     for (let stats of statsSorted) {
+                        let memberRanking = stats.rankings.filter((ranking: IRankingDetail) => {
+                            if (ranking.account_name == member) return ranking;
+                        });
 
-                        for (let ranking of stats.rankings) {
-
-                            if (ranking.account_name === member)
-                                data.push(ranking.ranking['value']);
+                        if (memberRanking===null || memberRanking.length==0 ){
+                            data.push(0);
+                        }
+                        else{
+                            data.push(memberRanking[0].ranking.value);
                         }
                     }
                     series.push({ name: member, data: data });

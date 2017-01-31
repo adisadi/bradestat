@@ -7,6 +7,7 @@ const rclient = require('./../redis').rclient;
 
 const helper = require('./../import/wotImport');
 
+const winston = require('./../logger').winston;
 
 
 /* GET api listing. */
@@ -24,6 +25,7 @@ router.get('/members', (req, res) => {
                     callback();
                 });
             }, function () {
+                winston.info('/members', names);
                 res.json(names);
             });
     });
@@ -57,6 +59,12 @@ router.get('/stats/:statType/:statField', (req, res) => {
                         }
                         array.push({ date: date, rankings: rankings });
                     }
+
+                    let newArray=array.map((obj)=>{
+                        return {date:new Date(obj.date*1000),rankings: obj.rankings};
+                    });
+
+                    winston.info('/stats', { members: memberNames, dates: newArray });
                     res.json({ members: memberNames, dates: array });
                 });
             });
@@ -81,6 +89,7 @@ router.get('/statTypes', (req, res) => {
 
                     return parseInt(s1) - parseInt(s2);
                 });
+                winston.info('/statTypes', sorted);
                 res.json(sorted);
             });
     });
@@ -90,6 +99,7 @@ router.get('/statTypes', (req, res) => {
 router.get('/statFields/:statType', (req, res) => {
     var statType = req.params.statType;
     rclient.hget("stat_type:" + statType, 'rank_fields', function (e, name) {
+        winston.info('/statFields', name);
         res.json(JSON.parse(name));
     });
 });
@@ -100,10 +110,12 @@ router.get('/updateStats/:force?', (req, res) => {
         var date = new Date(date);
         if (date.getDate() != new Date().getDate() || (force === 'true')) {
             helper.importWotStat(function (exeDate, t) {
+                winston.info('/statFields', { status: 'UPDATED', lastUpdate: exeDate, executionTime: t });
                 res.json({ status: 'UPDATED', lastUpdate: exeDate, executionTime: t });
             });
         }
         else {
+            winston.info('/statFields', { status: 'NOTUPDATED', lastUpdate: date });
             res.json({ status: 'NOTUPDATED', lastUpdate: date });
         }
     });
