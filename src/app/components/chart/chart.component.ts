@@ -52,7 +52,7 @@ export class ChartComponent implements OnInit {
           categories: null
         },
         credits: {enabled:false},
-        chart:{width:300}
+        chart:{width:280}
       };
       return;
     }
@@ -76,7 +76,7 @@ export class ChartComponent implements OnInit {
             }
           },
           credits: {enabled:false},
-          chart:{width:300}
+          chart:{width:280}
         };
       },
       error => console.log(error),

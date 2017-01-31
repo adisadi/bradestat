@@ -30,7 +30,7 @@
   <md-tab  *ngFor="let statType of statTypes" [label]="statType.name()">
     <div>
       <div class="flex-container" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center" fxLayoutWrap="wrap" fxLayoutGap="20px" >
-        <div class="flex-item" fxFlex="20%" fxFlex.xs="100%" *ngFor="let statField of statFields[statType.type]">
+        <div class="flex-item" fxFlex="350px" fxFlex.xs="100%" *ngFor="let statField of statFields[statType.type]">
           <md-card >
               <app-chart [StatType]="statType.type" [StatField]="statField"></app-chart>
           </md-card>
